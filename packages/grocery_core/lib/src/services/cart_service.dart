@@ -1,146 +1,109 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/grocery_item.dart';
 import '../models/cart_item.dart';
 
-/// Service for managing shopping cart operations
 class CartService extends ChangeNotifier {
-  static final CartService _instance = CartService._internal();
-  factory CartService() => _instance;
-  CartService._internal();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  final List<CartItem> _cartItems = [];
+  List<CartItem> _cartItems = [];
 
-  /// Get all cart items
+  CartService() {
+    // Listen to auth state changes to load/clear cart
+    _auth.authStateChanges().listen((user) {
+      if (user != null) {
+        _loadCartFromFirestore(user.uid);
+      } else {
+        _cartItems.clear();
+        notifyListeners();
+      }
+    });
+  }
+
   List<CartItem> get cartItems => List.unmodifiable(_cartItems);
-
-  /// Get total number of items in cart
   int get totalItemCount => _cartItems.fold(0, (sum, item) => sum + item.quantity);
-
-  /// Get total price of all items in cart
   double get totalPrice => _cartItems.fold(0.0, (sum, item) => sum + item.totalPrice);
+  String getFormattedTotal() => totalPrice.toStringAsFixed(2);
 
-  /// Check if item exists in cart
-  bool isItemInCart(String itemId) {
-    return _cartItems.any((cartItem) => cartItem.groceryItem.id == itemId);
+  CollectionReference _getCartCollection(String userId) {
+    return _firestore.collection('users').doc(userId).collection('cart');
   }
 
-  /// Get quantity of specific item in cart
-  int getItemQuantity(String itemId) {
-    final cartItem = _cartItems
-        .where((item) => item.groceryItem.id == itemId)
-        .firstOrNull;
-    return cartItem?.quantity ?? 0;
+  Future<void> _loadCartFromFirestore(String userId) async {
+    try {
+      final snapshot = await _getCartCollection(userId).get();
+      _cartItems = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return CartItem.fromJson(data);
+      }).toList();
+      notifyListeners();
+    } catch (e) {
+      print("Error loading cart: $e");
+    }
   }
 
-  /// Add item to cart
-  void addItem(GroceryItem groceryItem, {int quantity = 1}) {
-    final existingIndex = _cartItems
-        .indexWhere((item) => item.groceryItem.id == groceryItem.id);
+  void addItem(GroceryItem groceryItem) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    final existingIndex = _cartItems.indexWhere((item) => item.groceryItem.id == groceryItem.id);
 
     if (existingIndex != -1) {
-      // Item already exists, update quantity
-      final existingItem = _cartItems[existingIndex];
-      _cartItems[existingIndex] = existingItem.copyWith(
-        quantity: existingItem.quantity + quantity,
+      final updatedItem = _cartItems[existingIndex].copyWith(
+        quantity: _cartItems[existingIndex].quantity + 1,
       );
+      _cartItems[existingIndex] = updatedItem;
+      await _getCartCollection(userId).doc(groceryItem.id).set(updatedItem.toJson());
     } else {
-      // Add new item
-      _cartItems.add(CartItem(
+      final newItem = CartItem(
         groceryItem: groceryItem,
-        quantity: quantity,
+        quantity: 1,
         addedAt: DateTime.now(),
-      ));
-    }
-    notifyListeners();
-  }
-
-  /// Remove item from cart completely
-  void removeItem(String itemId) {
-    _cartItems.removeWhere((item) => item.groceryItem.id == itemId);
-    notifyListeners();
-  }
-
-  /// Update item quantity
-  void updateItemQuantity(String itemId, int newQuantity) {
-    if (newQuantity <= 0) {
-      removeItem(itemId);
-      return;
-    }
-
-    final index = _cartItems
-        .indexWhere((item) => item.groceryItem.id == itemId);
-    
-    if (index != -1) {
-      _cartItems[index] = _cartItems[index].copyWith(quantity: newQuantity);
-      notifyListeners();
-    }
-  }
-
-  /// Increase item quantity by 1
-  void increaseQuantity(String itemId) {
-    final index = _cartItems
-        .indexWhere((item) => item.groceryItem.id == itemId);
-    
-    if (index != -1) {
-      final currentItem = _cartItems[index];
-      _cartItems[index] = currentItem.copyWith(
-        quantity: currentItem.quantity + 1,
       );
-      notifyListeners();
+      _cartItems.add(newItem);
+      await _getCartCollection(userId).doc(groceryItem.id).set(newItem.toJson());
     }
+    notifyListeners();
   }
-
-  /// Decrease item quantity by 1
-  void decreaseQuantity(String itemId) {
-    final index = _cartItems
-        .indexWhere((item) => item.groceryItem.id == itemId);
+  
+  void decreaseQuantity(String itemId) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
     
+    final index = _cartItems.indexWhere((item) => item.groceryItem.id == itemId);
     if (index != -1) {
       final currentItem = _cartItems[index];
       if (currentItem.quantity > 1) {
-        _cartItems[index] = currentItem.copyWith(
-          quantity: currentItem.quantity - 1,
-        );
+        final updatedItem = currentItem.copyWith(quantity: currentItem.quantity - 1);
+        _cartItems[index] = updatedItem;
+        await _getCartCollection(userId).doc(itemId).set(updatedItem.toJson());
       } else {
         _cartItems.removeAt(index);
+        await _getCartCollection(userId).doc(itemId).delete();
       }
       notifyListeners();
     }
   }
 
-  /// Clear entire cart
-  void clearCart() {
+  void clearCart() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    // Delete all documents in the cart subcollection
+    final cartSnapshot = await _getCartCollection(userId).get();
+    for (var doc in cartSnapshot.docs) {
+      await doc.reference.delete();
+    }
+
     _cartItems.clear();
     notifyListeners();
   }
 
-  /// Get cart summary
-  Map<String, dynamic> getCartSummary() {
-    return {
-      'totalItems': totalItemCount,
-      'totalPrice': totalPrice,
-      'itemCount': _cartItems.length,
-      'items': _cartItems.map((item) => item.toJson()).toList(),
-    };
-  }
-
-  /// Calculate tax (8% by default)
-  double calculateTax({double taxRate = 0.08}) {
-    return totalPrice * taxRate;
-  }
-
-  /// Calculate total with tax
-  double getTotalWithTax({double taxRate = 0.08}) {
-    return totalPrice + calculateTax(taxRate: taxRate);
-  }
-
-  /// Get formatted total price
-  String getFormattedTotal() {
-    return totalPrice.toStringAsFixed(2);
-  }
-
-  /// Get formatted total with tax
-  String getFormattedTotalWithTax({double taxRate = 0.08}) {
-    return getTotalWithTax(taxRate: taxRate).toStringAsFixed(2);
+  // No changes needed for increaseQuantity as it can call our updated addItem.
+  void increaseQuantity(String itemId) {
+    final item = _cartItems.firstWhere((item) => item.groceryItem.id == itemId);
+    addItem(item.groceryItem);
   }
 }
