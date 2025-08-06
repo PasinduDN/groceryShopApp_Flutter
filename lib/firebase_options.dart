@@ -17,17 +17,29 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      return web;
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'you can reconfigure this by running the FlutterFire CLI again.',
+      );
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        return ios;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for ios - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -40,49 +52,11 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDiCuk2zh8VQ9DL7HVRkuESCz90W3HTkf0',
-    appId: '1:758269828956:web:bd55ad67fe2bc195cf6b99',
-    messagingSenderId: '758269828956',
-    projectId: 'groceryshopapp-2db34',
-    authDomain: 'groceryshopapp-2db34.firebaseapp.com',
-    storageBucket: 'groceryshopapp-2db34.firebasestorage.app',
-    measurementId: 'G-D22WE0723B',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBATcdd5Nqpj-Vmt1H8MvYmi9KLyaZLR60',
     appId: '1:758269828956:android:e996ed68e586bc61cf6b99',
     messagingSenderId: '758269828956',
     projectId: 'groceryshopapp-2db34',
     storageBucket: 'groceryshopapp-2db34.firebasestorage.app',
-  );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBaZG1DQ1NhSSa3-cs4WynOzL67ziZkfQ0',
-    appId: '1:758269828956:ios:e4e1631bb44ac71ccf6b99',
-    messagingSenderId: '758269828956',
-    projectId: 'groceryshopapp-2db34',
-    storageBucket: 'groceryshopapp-2db34.firebasestorage.app',
-    iosBundleId: 'com.example.groceryShop',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBaZG1DQ1NhSSa3-cs4WynOzL67ziZkfQ0',
-    appId: '1:758269828956:ios:e4e1631bb44ac71ccf6b99',
-    messagingSenderId: '758269828956',
-    projectId: 'groceryshopapp-2db34',
-    storageBucket: 'groceryshopapp-2db34.firebasestorage.app',
-    iosBundleId: 'com.example.groceryShop',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDiCuk2zh8VQ9DL7HVRkuESCz90W3HTkf0',
-    appId: '1:758269828956:web:f522fd61a70dc508cf6b99',
-    messagingSenderId: '758269828956',
-    projectId: 'groceryshopapp-2db34',
-    authDomain: 'groceryshopapp-2db34.firebaseapp.com',
-    storageBucket: 'groceryshopapp-2db34.firebasestorage.app',
-    measurementId: 'G-0EZGQZ5CHT',
   );
 }
