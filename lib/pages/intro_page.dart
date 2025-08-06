@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:grocery_shop/pages/home_page.dart';
+import 'package:grocery_shop/pages/auth_wrapper.dart'; // Import the new wrapper
 
 class IntroPage extends StatelessWidget {
   const IntroPage({super.key});
@@ -11,12 +11,13 @@ class IntroPage extends StatelessWidget {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 80.0, right: 80.0, top: 140.0, bottom: 20.0),
+            padding: const EdgeInsets.only(
+                left: 80.0, right: 80.0, top: 140.0, bottom: 20.0),
             child: Image.asset('lib/images/avocado.png'),
           ),
 
           Padding(
-            padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 24.0, bottom: 24.0),
+            padding: const EdgeInsets.all(24.0),
             child: Text(
               'We deliver groceries at your doorstep',
               textAlign: TextAlign.center,
@@ -30,21 +31,23 @@ class IntroPage extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          Text("Fresh Items everyday",
+          Text(
+            "Fresh Items everyday",
             style: TextStyle(
               fontSize: 20,
               color: Colors.green[600],
             ),
           ),
-          
+
           const Spacer(),
 
           GestureDetector(
             onTap: () => Navigator.pushReplacement(
-              context, 
+              context,
               MaterialPageRoute(
                 builder: (context) {
-                  return const HomePage(); // Assuming you have a HomePage widget to navigate to
+                  // Navigate to the AuthWrapper
+                  return const AuthWrapper();
                 },
               ),
             ),
@@ -54,14 +57,16 @@ class IntroPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               padding: const EdgeInsets.all(24),
-              child: const Text("Get Started",
+              child: const Text(
+                "Get Started",
                 style: TextStyle(
                   fontSize: 20,
                   color: Colors.white,
                 ),
               ),
             ),
-          )
+          ),
+          const Spacer(),
         ],
       ),
     );
