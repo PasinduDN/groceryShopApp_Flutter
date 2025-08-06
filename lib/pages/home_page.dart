@@ -10,9 +10,7 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access the services from the provider
     final groceryService = Provider.of<GroceryService>(context, listen: false);
-    final cartService = Provider.of<CartService>(context);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -20,7 +18,7 @@ class HomePage extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) {
-              return CartPage();
+              return const CartPage();
             },
           ),
         ),
@@ -31,16 +29,43 @@ class HomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ... (Your existing UI code for titles and dividers)
+            const SizedBox(height: 48),
+
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text("Good Morning"),
+            ),
+
+            const SizedBox(height: 4),
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text(
+                "Let's order fresh items for you",
+                style: GoogleFonts.notoSerif(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Divider(),
+            ),
+
+            const SizedBox(height: 24),
+
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0),
               child: Text("Fresh Items", style: TextStyle(fontSize: 16)),
             ),
 
             Expanded(
               child: GridView.builder(
-                itemCount: groceryService.getAllItems().length, // Get items from service
+                itemCount: groceryService.getAllItems().length,
                 padding: const EdgeInsets.all(8.0),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
@@ -49,15 +74,22 @@ class HomePage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final item = groceryService.getAllItems()[index];
                   return GroceryItemTile(
-                    itemName: item.name,
-                    itemPrice: item.price.toStringAsFixed(2),
-                    imagePath: item.imagePath,
-                    color: item.backgroundColor,
-                    onPressed: () {
-                      // Use CartService to add items
-                      Provider.of<CartService>(context, listen: false).addItem(item);
-                    },
-                  );
+                      itemName: item.name,
+                      itemPrice: item.price.toStringAsFixed(2),
+                      imagePath: item.imagePath,
+                      color: item.backgroundColor,
+                      onPressed: () {
+                        Provider.of<CartService>(context, listen: false)
+                            .addItem(item);
+
+                        // Show a SnackBar for user feedback
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${item.name} added to cart!'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      });
                 },
               ),
             ),

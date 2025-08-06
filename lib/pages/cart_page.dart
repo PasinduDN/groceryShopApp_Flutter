@@ -10,63 +10,152 @@ class CartPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // ... (Your AppBar code)
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Consumer<CartService>( // Consume the CartService
+      body: Consumer<CartService>(
         builder: (context, cartService, child) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ... (Your "My Cart" title)
-
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(
+                  "My Cart",
+                  style: GoogleFonts.notoSerif(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
               Expanded(
                 child: ListView.builder(
                   itemCount: cartService.cartItems.length,
-                  padding: EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(12.0),
                   itemBuilder: (context, index) {
                     final cartItem = cartService.cartItems[index];
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 0.0),
-                      // ... (Your existing item padding and container)
-                      child: ListTile(
-                        leading: Image.asset(
-                          cartItem.groceryItem.imagePath,
-                          height: 50,
-                          width: 50,
+                      padding: const EdgeInsets.all(12.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border:
+                              Border(bottom: BorderSide(color: Colors.grey)),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        title: Text(cartItem.groceryItem.name),
-                        subtitle: Text(
-                          "Price: \$${cartItem.groceryItem.price.toStringAsFixed(2)} x ${cartItem.quantity}",
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.remove_circle),
-                          onPressed: () => cartService.removeItem(cartItem.groceryItem.id),
+                        child: ListTile(
+                          leading: Image.asset(
+                            cartItem.groceryItem.imagePath,
+                            height: 50,
+                            width: 50,
+                          ),
+                          title: Text(cartItem.groceryItem.name),
+                          subtitle: Text(
+                            '\$${cartItem.groceryItem.price.toStringAsFixed(2)}',
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove),
+                                onPressed: () {
+                                  cartService.decreaseQuantity(
+                                      cartItem.groceryItem.id);
+                                },
+                              ),
+                              Text(
+                                cartItem.quantity.toString(),
+                                style: const TextStyle(fontSize: 18),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add),
+                                onPressed: () {
+                                  cartService.increaseQuantity(
+                                      cartItem.groceryItem.id);
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
                   },
                 ),
               ),
-
-              // ... (Your total price and "Pay Now" button)
-              // Update the total calculation to use the service
               Padding(
                 padding: const EdgeInsets.all(24.0),
-                child: Container(
-                  // ... (Styling)
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Total Price", style: TextStyle(fontWeight: FontWeight.bold, color: const Color.fromARGB(255, 159, 66, 66))),
-                          const SizedBox(height: 4),
-                          Text('\$${cartService.getFormattedTotal()}', style: TextStyle(fontSize: 18, color: const Color.fromARGB(255, 159, 66, 66))),
+                child: GestureDetector(
+                  onTap: () {
+                    // Show a confirmation dialog
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Payment Successful'),
+                        content: const Text('Your order has been placed.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              // Clear the cart
+                              cartService.clearCart();
+                              // Close the dialog
+                              Navigator.of(context).pop();
+                              // Go back to the home page
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('OK'),
+                          ),
                         ],
                       ),
-                      // ... ("Pay Now" button)
-                    ],
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 229, 155, 155),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Total Price",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Color.fromARGB(255, 159, 66, 66))),
+                            const SizedBox(height: 4),
+                            Text('\$${cartService.getFormattedTotal()}',
+                                style: const TextStyle(
+                                    fontSize: 18,
+                                    color:
+                                        Color.fromARGB(255, 159, 66, 66))),
+                          ],
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          child: Row(
+                            children: const [
+                              Text("Pay Now",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white)),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                 ),
               )
