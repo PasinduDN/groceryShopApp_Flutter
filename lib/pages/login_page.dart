@@ -13,20 +13,30 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String _errorMessage = '';
+  bool _isLoading = false;
 
-  void _handleSignUp(AuthService authService) async {
+  Future<void> _handleSignUp(AuthService authService) async {
+    if (!_validateInputs()) return;
+
+    setState(() => _isLoading = true);
     final user = await authService.signUpWithEmailAndPassword(
       _emailController.text,
       _passwordController.text,
     );
     if (user == null) {
       setState(() {
-        _errorMessage = 'Could not sign up. Please check your details.';
+        _errorMessage = 'Could not sign up. The email may already be in use.';
       });
+    }
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
 
-  void _handleSignIn(AuthService authService) async {
+  Future<void> _handleSignIn(AuthService authService) async {
+    if (!_validateInputs()) return;
+
+    setState(() => _isLoading = true);
     final user = await authService.signInWithEmailAndPassword(
       _emailController.text,
       _passwordController.text,
@@ -36,6 +46,26 @@ class _LoginPageState extends State<LoginPage> {
         _errorMessage = 'Could not sign in. Please check your credentials.';
       });
     }
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  bool _validateInputs() {
+    setState(() => _errorMessage = '');
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      setState(() => _errorMessage = 'Email and password cannot be empty.');
+      return false;
+    }
+    if (!_emailController.text.contains('@') || !_emailController.text.contains('.')) {
+      setState(() => _errorMessage = 'Please enter a valid email address.');
+      return false;
+    }
+    if (_passwordController.text.length < 6) {
+      setState(() => _errorMessage = 'Password must be at least 6 characters.');
+      return false;
+    }
+    return true;
   }
 
   @override
@@ -67,19 +97,22 @@ class _LoginPageState extends State<LoginPage> {
                 style: const TextStyle(color: Colors.red),
               ),
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () => _handleSignIn(authService),
-                  child: const Text('Sign In'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _handleSignUp(authService),
-                  child: const Text('Sign Up'),
-                ),
-              ],
-            ),
+            if (_isLoading)
+              const CircularProgressIndicator()
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => _handleSignIn(authService),
+                    child: const Text('Sign In'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => _handleSignUp(authService),
+                    child: const Text('Sign Up'),
+                  ),
+                ],
+              ),
           ],
         ),
       ),

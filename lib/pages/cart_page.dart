@@ -8,160 +8,171 @@ class CartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Watch for changes in CartService, including loading state
+    final cartService = context.watch<CartService>();
+    final bool isLoading = cartService.isLoading;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: Consumer<CartService>(
-        builder: (context, cartService, child) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
-                  "My Cart",
-                  style: GoogleFonts.notoSerif(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Text(
+              "My Cart",
+              style: GoogleFonts.notoSerif(
+                fontSize: 30,
+                fontWeight: FontWeight.w600,
               ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: cartService.cartItems.length,
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: cartService.cartItems.length,
+              padding: const EdgeInsets.all(12.0),
+              itemBuilder: (context, index) {
+                final cartItem = cartService.cartItems[index];
+                return Padding(
                   padding: const EdgeInsets.all(12.0),
-                  itemBuilder: (context, index) {
-                    final cartItem = cartService.cartItems[index];
-                    return Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border:
-                              Border(bottom: BorderSide(color: Colors.grey)),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: ListTile(
-                          leading: Image.asset(
-                            cartItem.groceryItem.imagePath,
-                            height: 50,
-                            width: 50,
-                          ),
-                          title: Text(cartItem.groceryItem.name),
-                          subtitle: Text(
-                            '\$${cartItem.groceryItem.price.toStringAsFixed(2)}',
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.remove),
-                                onPressed: () {
-                                  cartService.decreaseQuantity(
-                                      cartItem.groceryItem.id);
-                                },
-                              ),
-                              Text(
-                                cartItem.quantity.toString(),
-                                style: const TextStyle(fontSize: 18),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.add),
-                                onPressed: () {
-                                  cartService.increaseQuantity(
-                                      cartItem.groceryItem.id);
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Colors.grey)),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ListTile(
+                      leading: Image.asset(
+                        cartItem.groceryItem.imagePath,
+                        height: 50,
+                        width: 50,
                       ),
-                    );
-                  },
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: GestureDetector(
-                  onTap: () {
-                    // Show a confirmation dialog
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Payment Successful'),
-                        content: const Text('Your order has been placed.'),
-                        actions: [
-                          TextButton(
+                      title: Text(cartItem.groceryItem.name),
+                      subtitle: Text(
+                        '\$${cartItem.groceryItem.price.toStringAsFixed(2)}',
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove),
                             onPressed: () {
-                              // Clear the cart
-                              cartService.clearCart();
-                              // Close the dialog
-                              Navigator.of(context).pop();
-                              // Go back to the home page
-                              Navigator.of(context).pop();
+                              cartService.decreaseQuantity(cartItem.groceryItem.id);
                             },
-                            child: const Text('OK'),
+                          ),
+                          Text(
+                            cartItem.quantity.toString(),
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: () {
+                              cartService.addItem(cartItem.groceryItem);
+                            },
                           ),
                         ],
                       ),
-                    );
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 229, 155, 155),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("Total Price",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color:
-                                        Color.fromARGB(255, 159, 66, 66))),
-                            const SizedBox(height: 4),
-                            Text('\$${cartService.getFormattedTotal()}',
-                                style: const TextStyle(
-                                    fontSize: 18,
-                                    color:
-                                        Color.fromARGB(255, 159, 66, 66))),
-                          ],
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          child: Row(
-                            children: const [
-                              Text("Pay Now",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white)),
-                              Icon(
-                                Icons.arrow_forward_ios,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ],
-                          ),
-                        )
-                      ],
                     ),
                   ),
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: GestureDetector(
+              onTap: () async {
+                if (isLoading || cartService.cartItems.isEmpty) return;
+
+                final bool? confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Confirm Purchase'),
+                    content: Text(
+                        'Are you sure you want to purchase these items for \$${cartService.getFormattedTotal()}?'),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel')),
+                      TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Confirm')),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  await cartService.clearCart();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Thank you for your purchase!')),
+                    );
+                    Navigator.of(context).pop();
+                  }
+                }
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 229, 155, 155),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              )
-            ],
-          );
-        },
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Total Price",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color.fromARGB(255, 159, 66, 66))),
+                        const SizedBox(height: 4),
+                        Text('\$${cartService.getFormattedTotal()}',
+                            style: const TextStyle(
+                                fontSize: 18,
+                                color: Color.fromARGB(255, 159, 66, 66))),
+                      ],
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.0,
+                              ),
+                            )
+                          : Row(
+                              children: const [
+                                Text("Pay Now",
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white)),
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ],
+                            ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          )
+        ],
       ),
     );
   }
