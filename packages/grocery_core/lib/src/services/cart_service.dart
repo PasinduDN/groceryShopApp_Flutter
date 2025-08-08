@@ -29,6 +29,7 @@ class CartService extends ChangeNotifier {
   double get totalPrice => _cartItems.fold(0.0, (sum, item) => sum + item.totalPrice);
   String getFormattedTotal() => totalPrice.toStringAsFixed(2);
 
+  // Helper function to manage loading state and automatically refresh the cart
   Future<void> _runAndUpdate(Future<void> Function(String userId) action) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return;
@@ -36,29 +37,43 @@ class CartService extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    await action(userId);
-    // After the action, reload the cart from the database to ensure UI is in sync
-    await loadCart();
-
-    _isLoading = false;
-    notifyListeners();
+    try {
+      await action(userId);
+      // After every action, reload the cart from Firestore to ensure the UI is in sync.
+      await loadCart(notify: false); // `notify: false` to avoid flicker
+    } catch (e) {
+      print("An error occurred in CartService: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
-  Future<void> loadCart() async {
+  // Public method to load/refresh the cart
+  Future<void> loadCart({bool notify = true}) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return;
-    
-    _isLoading = true;
-    notifyListeners();
 
+    if (notify) {
+      _isLoading = true;
+      notifyListeners();
+    }
+    
     _cartItems = await cartRepository.getCart(userId);
     
-    _isLoading = false;
-    notifyListeners();
+    if (notify) {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> addItem(GroceryItem groceryItem) async {
     await _runAndUpdate((userId) => cartRepository.addItemToCart(userId, groceryItem));
+  }
+
+  Future<void> increaseQuantity(String itemId) async {
+    final item = cartItems.firstWhere((i) => i.groceryItem.id == itemId).groceryItem;
+    await _runAndUpdate((userId) => cartRepository.addItemToCart(userId, item));
   }
   
   Future<void> decreaseQuantity(String itemId) async {

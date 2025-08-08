@@ -41,7 +41,7 @@ class CartPage extends StatelessWidget {
                   padding: const EdgeInsets.all(12.0),
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border(bottom: BorderSide(color: Colors.grey)),
+                      border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: ListTile(
@@ -59,7 +59,7 @@ class CartPage extends StatelessWidget {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.remove),
-                            onPressed: () {
+                            onPressed: isLoading ? null : () {
                               cartService.decreaseQuantity(cartItem.groceryItem.id);
                             },
                           ),
@@ -69,8 +69,9 @@ class CartPage extends StatelessWidget {
                           ),
                           IconButton(
                             icon: const Icon(Icons.add),
-                            onPressed: () {
-                              cartService.addItem(cartItem.groceryItem);
+                            onPressed: isLoading ? null : () {
+                              // Use the correct increaseQuantity method now
+                              cartService.increaseQuantity(cartItem.groceryItem.id);
                             },
                           ),
                         ],
@@ -116,7 +117,9 @@ class CartPage extends StatelessWidget {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 229, 155, 155),
+                  color: cartService.cartItems.isEmpty
+                      ? Colors.grey
+                      : const Color.fromARGB(255, 229, 155, 155),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 padding: const EdgeInsets.all(12.0),
